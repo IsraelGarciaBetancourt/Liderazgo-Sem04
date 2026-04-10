@@ -1,21 +1,19 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Slide1 from "@/components/Slide1";
 import Slide2 from "@/components/Slide2";
 
 // ==========================================
-// VARIANTES DE TRANSICIÓN "PRO" (Keynote Style)
+// VARIANTES DE TRANSICIÓN "PRO"
 // ==========================================
 const slideVariants = {
-  // Cuando la diapositiva ENTRA
   enter: (direction: number) => ({
-    x: direction > 0 ? "100%" : "-100%", // Viene de la derecha o izquierda según la dirección
+    x: direction > 0 ? "100%" : "-100%",
     opacity: 0,
-    scale: 0.85, // Efecto de profundidad (entra desde lejos)
-    filter: "blur(10px)", // Desenfoque cinematográfico de movimiento
+    scale: 0.85,
+    filter: "blur(10px)",
   }),
-  // Cuando la diapositiva está en el CENTRO
   center: {
     zIndex: 1,
     x: 0,
@@ -23,20 +21,22 @@ const slideVariants = {
     scale: 1,
     filter: "blur(0px)",
   },
-  // Cuando la diapositiva SALE
   exit: (direction: number) => ({
     zIndex: 0,
-    x: direction < 0 ? "100%" : "-100%", // Se va hacia el lado contrario
+    x: direction < 0 ? "100%" : "-100%",
     opacity: 0,
-    scale: 0.85, // Efecto de profundidad (se aleja)
+    scale: 0.85,
     filter: "blur(10px)",
   }),
 };
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  // Añadimos un estado para saber si vamos hacia adelante (1) o hacia atrás (-1)
   const [direction, setDirection] = useState(0); 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Referencia al contenedor principal para la pantalla completa
+  const mainRef = useRef<HTMLDivElement>(null);
   
   const slides = [<Slide1 key="1" />, <Slide2 key="2" />];
 
@@ -44,14 +44,31 @@ export default function Home() {
   // LÓGICA DE NAVEGACIÓN
   // ==========================================
   const nextSlide = useCallback(() => {
-    setDirection(1); // Indicamos que vamos hacia la derecha
+    setDirection(1);
     setCurrentSlide((prev) => (prev + 1) % slides.length);
   }, [slides.length]);
 
   const prevSlide = useCallback(() => {
-    setDirection(-1); // Indicamos que vamos hacia la izquierda
+    setDirection(-1);
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   }, [slides.length]);
+
+  // ==========================================
+  // LÓGICA DE PANTALLA COMPLETA GLOBAL
+  // ==========================================
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      mainRef.current?.requestFullscreen().catch((err) => console.log(err));
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
 
   // ==========================================
   // EVENTOS DEL TECLADO
@@ -69,23 +86,21 @@ export default function Home() {
   }, [nextSlide, prevSlide]);
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-[#0a0a0a]">
+    <main ref={mainRef} className="relative w-full h-screen overflow-hidden bg-[#0a0a0a]">
       
       {/* ========================================== */}
       {/* CONTENEDOR DE DIAPOSITIVAS ANIMADAS        */}
       {/* ========================================== */}
-      
-      {/* Quitamos mode="wait" para que la diapositiva vieja y la nueva se muevan al MISMO TIEMPO, creando un cruce perfecto */}
       <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={currentSlide}
-          custom={direction} // Le pasamos la dirección a nuestras variantes
+          custom={direction}
           variants={slideVariants}
           initial="enter"
           animate="center"
           exit="exit"
           transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 }, // Física de resorte rápida pero suave
+            x: { type: "spring", stiffness: 300, damping: 30 },
             opacity: { duration: 0.4 },
             scale: { duration: 0.4, ease: "easeOut" },
             filter: { duration: 0.3 }
@@ -97,30 +112,62 @@ export default function Home() {
       </AnimatePresence>
 
       {/* ========================================== */}
-      {/* CONTROLES DE NAVEGACIÓN (HUD)                */}
+      {/* INTERFAZ DE USUARIO (Controles y Botones)    */}
       {/* ========================================== */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 group">
-        <div className="flex items-center gap-6 bg-black/60 backdrop-blur-xl px-6 py-3 rounded-full border border-white/10 shadow-2xl opacity-40 transition-all duration-300 group-hover:opacity-100 hover:scale-105">
-          
-          <button onClick={prevSlide} className="text-white/80 hover:text-[#8C5A35] transition-colors focus:outline-none" title="Anterior">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
 
+      {/* Flecha Izquierda (Área gigante para clickear fácil) */}
+      <div 
+        onClick={prevSlide}
+        className="absolute left-0 top-0 bottom-0 w-24 z-50 flex items-center justify-start pl-4 cursor-pointer group"
+      >
+        <div className="bg-black/20 backdrop-blur-sm p-4 rounded-full border border-white/10 opacity-50 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110 group-hover:bg-black/60">
+          <svg className="w-10 h-10 text-white/80 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Flecha Derecha (Área gigante para clickear fácil) */}
+      <div 
+        onClick={nextSlide}
+        className="absolute right-0 top-0 bottom-0 w-24 z-50 flex items-center justify-end pr-4 cursor-pointer group"
+      >
+        <div className="bg-black/20 backdrop-blur-sm p-4 rounded-full border border-white/10 opacity-50 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110 group-hover:bg-black/60">
+          <svg className="w-10 h-10 text-white/80 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Barra Inferior (Indicador y Fullscreen) */}
+      <div className="absolute bottom-6 left-6 right-6 z-50 flex justify-between items-center pointer-events-none">
+        
+        {/* Indicador de número (Se queda a la izquierda o centro si prefieres) */}
+        <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg pointer-events-auto opacity-30 hover:opacity-100 transition-opacity">
           <div className="text-white font-black text-sm tracking-widest tabular-nums select-none flex items-center gap-2">
             <span>{currentSlide + 1}</span>
             <span className="text-white/30">/</span>
             <span className="text-white/60">{slides.length}</span>
           </div>
-
-          <button onClick={nextSlide} className="text-white/80 hover:text-[#8C5A35] transition-colors focus:outline-none" title="Siguiente">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-
         </div>
+
+        {/* Botón Fullscreen Global */}
+        <button 
+          onClick={toggleFullscreen}
+          className="bg-black/40 backdrop-blur-md hover:bg-[#8C5A35] text-white p-3 rounded-full border border-white/10 transition-all shadow-lg pointer-events-auto opacity-30 hover:opacity-100 hover:scale-110 focus:outline-none"
+          title={isFullscreen ? "Salir de pantalla completa" : "Ver en pantalla completa"}
+        >
+          {isFullscreen ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 14h6v6m10-10h-6V4m0 10l7 7m-7-7L4 4" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          )}
+        </button>
+
       </div>
 
     </main>

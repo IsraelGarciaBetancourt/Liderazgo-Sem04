@@ -181,23 +181,6 @@ export default function Slide1() {
         </motion.footer>
 
       </motion.div>
-
-      {/* BOTÓN DE PANTALLA COMPLETA */}
-      <button 
-        onClick={toggleFullscreen}
-        className="absolute bottom-6 right-6 z-50 bg-black/60 hover:bg-[#8C5A35] text-white p-4 rounded-full backdrop-blur-md transition-all shadow-2xl group flex items-center justify-center hover:scale-110"
-        title={isFullscreen ? "Salir de pantalla completa" : "Ver en pantalla completa"}
-      >
-        {isFullscreen ? (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 14h6v6m10-10h-6V4m0 10l7 7m-7-7L4 4" />
-          </svg>
-        ) : (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-          </svg>
-        )}
-      </button>
     </div>
   );
 }
