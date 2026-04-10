@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 
 export default function Slide1() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,22 +41,22 @@ export default function Slide1() {
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
-  // ==========================================
+// ==========================================
   // VARIANTES DE ANIMACIÓN (FRAMER MOTION)
   // ==========================================
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.2 } }
   };
-  const popUp = {
+  const popUp: Variants = {
     hidden: { y: 40, opacity: 0 },
     show: { y: 0, opacity: 1, transition: { type: "spring", bounce: 0.4, duration: 0.8 } }
   };
-  const slideLeft = {
+  const slideLeft: Variants = {
     hidden: { x: -60, opacity: 0 },
     show: { x: 0, opacity: 1, transition: { type: "spring", bounce: 0.3, duration: 0.8 } }
   };
-  const slideRight = {
+  const slideRight: Variants = {
     hidden: { x: 60, opacity: 0 },
     show: { x: 0, opacity: 1, transition: { type: "spring", bounce: 0.3, duration: 0.8 } }
   };
